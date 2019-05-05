@@ -5,17 +5,24 @@ import android.graphics.Bitmap;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+
+import epsi.thomas.gosecuri.api.ocr.OcrCni;
 
 public class IndexActivity extends AppCompatActivity {
 
-    ImageView imageView;
-    Button btnCamera;
-    Button btnValidate;
-
+    private ImageView imageView;
+    private Button btnCamera;
+    private Button btnValidate;
+    private File tempFile;
+    private final String TEMP_FILE_NAME = "temp_img_file.jpg";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +32,9 @@ public class IndexActivity extends AppCompatActivity {
         btnCamera = findViewById(R.id.btnCamera);
         btnValidate = findViewById(R.id.btnValidate);
         imageView = findViewById(R.id.imageView);
+
+        File cDir = getBaseContext().getCacheDir();
+        tempFile = new File(cDir.getPath() + "/" + TEMP_FILE_NAME) ;
 
 
         btnCamera.setOnClickListener(new View.OnClickListener() {
@@ -38,7 +48,7 @@ public class IndexActivity extends AppCompatActivity {
         btnValidate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i("Test", "bobite");
+                new OcrCni().execute(getBaseContext().getCacheDir().getPath() + "/" + TEMP_FILE_NAME);
             }
         });
     }
@@ -46,8 +56,19 @@ public class IndexActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult (int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
+
         Bitmap bitmap = (Bitmap) data.getExtras().get("data");
         imageView.setImageBitmap(bitmap);
         btnValidate.setVisibility(View.VISIBLE);
+
+        OutputStream outStream = null;
+        try {
+            outStream = new FileOutputStream(tempFile);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 85, outStream);
+            outStream.close();
+            Toast.makeText(getApplicationContext(), "Saved", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
