@@ -22,7 +22,7 @@ public class IndexActivity extends AppCompatActivity {
     private Button btnCamera;
     private Button btnValidate;
     private File tempFile;
-    private final String TEMP_FILE_NAME = "temp_img_file.jpg";
+    private final String TEMP_FILE_NAME = "temp_img_file.png";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +48,7 @@ public class IndexActivity extends AppCompatActivity {
         btnValidate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new OcrCni().execute(getBaseContext().getCacheDir().getPath() + "/" + TEMP_FILE_NAME);
+                new OcrCni(IndexActivity.this, getBaseContext().getCacheDir().getPath() + "/" + TEMP_FILE_NAME).execute();
             }
         });
     }
@@ -58,15 +58,14 @@ public class IndexActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         Bitmap bitmap = (Bitmap) data.getExtras().get("data");
+
         imageView.setImageBitmap(bitmap);
         btnValidate.setVisibility(View.VISIBLE);
-
         OutputStream outStream = null;
         try {
             outStream = new FileOutputStream(tempFile);
             bitmap.compress(Bitmap.CompressFormat.PNG, 85, outStream);
             outStream.close();
-            Toast.makeText(getApplicationContext(), "Saved", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             e.printStackTrace();
         }
