@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "353435453597",
+    "firebase_url": "https://chef-epsi-java.firebaseio.com",
+    "project_id": "chef-epsi-java",
+    "storage_bucket": "chef-epsi-java.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353435453597:android:af356a5b413df311",
+        "android_client_info": {
+          "package_name": "epsi.thomas.gosecuri"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "353435453597-6rvdlblg00nir5kg1dps3jrr9k5dt4ig.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtZUXZ6HdpaexGlJbwVltMVetJGNR8N-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "353435453597-6rvdlblg00nir5kg1dps3jrr9k5dt4ig.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
