@@ -23,17 +23,22 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.document.FirebaseVisionCloudDocumentRecognizerOptions;
+import com.google.firebase.ml.vision.document.FirebaseVisionDocumentText;
+import com.google.firebase.ml.vision.document.FirebaseVisionDocumentTextRecognizer;
 import com.google.firebase.ml.vision.label.FirebaseVisionImageLabel;
 import com.google.firebase.ml.vision.label.FirebaseVisionImageLabeler;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 import com.google.firebase.ml.vision.text.RecognizedLanguage;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class IndexActivity extends AppCompatActivity {
@@ -96,8 +101,7 @@ public class IndexActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(((BitmapDrawable)imageView.getDrawable()).getBitmap());
-                //testFirebase(image);
-                testLabeler(image);
+                testFirebase(image);
             }
         });
 
@@ -121,8 +125,6 @@ public class IndexActivity extends AppCompatActivity {
                 btnRotate.setVisibility(View.VISIBLE);
 
                 FirebaseVisionImage image = FirebaseVisionImage.fromFilePath(getApplicationContext(), imageUri);
-                testFirebase(image);
-                testLabeler(image);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -130,56 +132,35 @@ public class IndexActivity extends AppCompatActivity {
     }
 
     private void testFirebase(FirebaseVisionImage image) {
-        FirebaseVisionTextRecognizer detector = FirebaseVision.getInstance()
-                .getOnDeviceTextRecognizer();
-        Task<FirebaseVisionText> task = detector.processImage(image);
-        task.addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
-            @Override
-            public void onSuccess(FirebaseVisionText firebaseVisionText) {
-                firebaseSuccess(firebaseVisionText);
-            }
-        });
+        FirebaseVisionCloudDocumentRecognizerOptions options =
+                new FirebaseVisionCloudDocumentRecognizerOptions.Builder()
+                        .setLanguageHints(Arrays.asList("fr"))
+                        .build();
+        FirebaseVisionDocumentTextRecognizer detector = FirebaseVision.getInstance()
+                .getCloudDocumentTextRecognizer(options);
+
+        detector.processImage(image)
+                .addOnSuccessListener(new OnSuccessListener<FirebaseVisionDocumentText>() {
+                    @Override
+                    public void onSuccess(FirebaseVisionDocumentText result) {
+                        firebaseSuccess(result);
+                    }
+                });
     }
 
-    private void testLabeler(FirebaseVisionImage image) {
-        FirebaseVisionImageLabeler labeler = FirebaseVision.getInstance()
-                .getCloudImageLabeler();
-        Task<List<FirebaseVisionImageLabel>> task = labeler.processImage(image);
-        task.addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionImageLabel>>() {
-            @Override
-            public void onSuccess(List<FirebaseVisionImageLabel> labels) {
-                for (FirebaseVisionImageLabel label: labels) {
-                    String text = label.getText();
-                    String entityId = label.getEntityId();
-                    float confidence = label.getConfidence();
-                    Log.i("Labeltest", text);
-                    Log.i("Labeltest", entityId);
-                }
-            }
-        });
-    }
-
-    private void firebaseSuccess(FirebaseVisionText result) {
+    private void firebaseSuccess(FirebaseVisionDocumentText  result) {
         String resultText = result.getText();
-        for (FirebaseVisionText.TextBlock block : result.getTextBlocks()) {
+        for (FirebaseVisionDocumentText.Block block: result.getBlocks()) {
             String blockText = block.getText();
-            Float blockConfidence = block.getConfidence();
-            List<RecognizedLanguage> blockLanguages = block.getRecognizedLanguages();
-            Point[] blockCornerPoints = block.getCornerPoints();
-            Rect blockFrame = block.getBoundingBox();
-            for (FirebaseVisionText.Line line : block.getLines()) {
-                String lineText = line.getText();
-                Float lineConfidence = line.getConfidence();
-                List<RecognizedLanguage> lineLanguages = line.getRecognizedLanguages();
-                Point[] lineCornerPoints = line.getCornerPoints();
-                Rect lineFrame = line.getBoundingBox();
-                for (FirebaseVisionText.Element element : line.getElements()) {
-                    String elementText = element.getText();
-                    Float elementConfidence = element.getConfidence();
-                    List<RecognizedLanguage> elementLanguages = element.getRecognizedLanguages();
-                    Point[] elementCornerPoints = element.getCornerPoints();
-                    Rect elementFrame = element.getBoundingBox();
-                    Log.i("firebaseSuccess", elementText);
+            for (FirebaseVisionDocumentText.Paragraph paragraph: block.getParagraphs()) {
+                String paragraphText = paragraph.getText();
+                Log.i("Labeltest", paragraphText);
+                for (FirebaseVisionDocumentText.Word word: paragraph.getWords()) {
+                    String wordText = word.getText();
+                    List<RecognizedLanguage> wordRecognizedLanguages = word.getRecognizedLanguages();
+                    for (FirebaseVisionDocumentText.Symbol symbol: word.getSymbols()) {
+                        String symbolText = symbol.getText();
+                    }
                 }
             }
         }
