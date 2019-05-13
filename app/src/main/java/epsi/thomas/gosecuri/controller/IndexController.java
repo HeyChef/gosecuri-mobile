@@ -1,4 +1,4 @@
-package epsi.thomas.gosecuri;
+package epsi.thomas.gosecuri.controller;
 
 import android.Manifest;
 import android.app.Activity;
@@ -41,15 +41,20 @@ import com.google.firebase.ml.vision.text.RecognizedLanguage;
 import java.util.Arrays;
 import java.util.List;
 
-public class IndexActivity extends AppCompatActivity {
+import epsi.thomas.gosecuri.R;
+import epsi.thomas.gosecuri.firebase.FirebaseDetection;
+import epsi.thomas.gosecuri.service.IndexService;
+
+public class IndexController extends AppCompatActivity {
 
     private ImageView imageView;
     private Button btnCamera;
-    private Button btnValidate;
     private Uri imageUri;
     private Bitmap thumbnail;
-    private Bitmap myBitmap;
     private Button btnRotate;
+
+    private IndexService indexService;
+
     private static final int MY_CAMERA_PERMISSION_CODE = 100;
     private static final int CAMERA_REQUEST = 1888;
     private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 200;
@@ -64,7 +69,7 @@ public class IndexActivity extends AppCompatActivity {
 
         FirebaseApp.initializeApp(this);
 
-
+        indexService = new IndexService();
         if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
             return;
@@ -76,7 +81,6 @@ public class IndexActivity extends AppCompatActivity {
         }
 
         btnCamera = findViewById(R.id.btnCamera);
-        btnValidate = findViewById(R.id.btnValidate);
         imageView = findViewById(R.id.imageView);
         btnRotate = findViewById(R.id.btnRotate);
 
@@ -96,21 +100,6 @@ public class IndexActivity extends AppCompatActivity {
                 }
             }
         });
-
-        btnValidate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(((BitmapDrawable)imageView.getDrawable()).getBitmap());
-                testFirebase(image);
-            }
-        });
-
-        btnRotate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-            }
-        });
     }
 
     @Override
@@ -118,10 +107,7 @@ public class IndexActivity extends AppCompatActivity {
         if (resultCode == Activity.RESULT_OK) {
             try {
                 thumbnail = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                //thumbnail = rotateBitmap(thumbnail,270);
-
                 imageView.setImageBitmap(thumbnail);
-                btnValidate.setVisibility(View.VISIBLE);
                 btnRotate.setVisibility(View.VISIBLE);
 
                 FirebaseVisionImage image = FirebaseVisionImage.fromFilePath(getApplicationContext(), imageUri);
@@ -131,46 +117,13 @@ public class IndexActivity extends AppCompatActivity {
         }
     }
 
-    private void testFirebase(FirebaseVisionImage image) {
-        FirebaseVisionCloudDocumentRecognizerOptions options =
-                new FirebaseVisionCloudDocumentRecognizerOptions.Builder()
-                        .setLanguageHints(Arrays.asList("fr"))
-                        .build();
-        FirebaseVisionDocumentTextRecognizer detector = FirebaseVision.getInstance()
-                .getCloudDocumentTextRecognizer(options);
+    public void cameraClick(View v){
 
-        detector.processImage(image)
-                .addOnSuccessListener(new OnSuccessListener<FirebaseVisionDocumentText>() {
-                    @Override
-                    public void onSuccess(FirebaseVisionDocumentText result) {
-                        firebaseSuccess(result);
-                    }
-                });
     }
 
-    private void firebaseSuccess(FirebaseVisionDocumentText  result) {
-        String resultText = result.getText();
-        for (FirebaseVisionDocumentText.Block block: result.getBlocks()) {
-            String blockText = block.getText();
-            for (FirebaseVisionDocumentText.Paragraph paragraph: block.getParagraphs()) {
-                String paragraphText = paragraph.getText();
-                Log.i("Labeltest", paragraphText);
-                for (FirebaseVisionDocumentText.Word word: paragraph.getWords()) {
-                    String wordText = word.getText();
-                    List<RecognizedLanguage> wordRecognizedLanguages = word.getRecognizedLanguages();
-                    for (FirebaseVisionDocumentText.Symbol symbol: word.getSymbols()) {
-                        String symbolText = symbol.getText();
-                    }
-                }
-            }
-        }
-    }
-
-    public static Bitmap rotateBitmap(Bitmap source, float angle)
-    {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    public void validateClick(View v){
+       Bitmap image = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
+       indexService.detectText(image);
     }
 
     @Override

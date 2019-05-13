@@ -10,7 +10,7 @@
     android:paddingTop="16dp"
     android:orientation="vertical"
     android:weightSum="10"
-    tools:context=".IndexActivity">
+    tools:context=".controller.IndexController">
 
     <ImageView
         android:id="@+id/imageView"
@@ -46,6 +46,7 @@
             android:textColor="#000000"
             android:text="Valider"
             android:layout_marginLeft="10dp"
+            android:onClick="validateClick"
             tools:ignore="ButtonStyle" />
 
     </LinearLayout>
