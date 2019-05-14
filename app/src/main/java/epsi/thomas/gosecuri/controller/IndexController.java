@@ -71,7 +71,7 @@ public class IndexController extends AppCompatActivity {
 
         FirebaseApp.initializeApp(this);
 
-        indexService = new IndexService();
+        indexService = new IndexService(this);
 
         if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
@@ -117,7 +117,7 @@ public class IndexController extends AppCompatActivity {
 
     public void validateClick(View v) {
         Bitmap image = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
-        Personne p = indexService.detectText(image);
+        indexService.detectText(image);
     }
 
     @Override

@@ -18,10 +18,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import epsi.thomas.gosecuri.entity.Personne;
+import epsi.thomas.gosecuri.service.IndexService;
 
 public class FirebaseDetection {
 
     private Personne personne;
+    private IndexService indexService;
+
+    public FirebaseDetection(IndexService indexService){
+        this.indexService = indexService;
+    }
 
     public Personne detectTextFromImage(Bitmap bitmapImage) {
         FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(bitmapImage);
@@ -38,8 +44,7 @@ public class FirebaseDetection {
                     @Override
                     public void onSuccess(FirebaseVisionDocumentText result) {
                         personne = getPersonne(result);
-                        FirebaseInteraction fi = FirebaseInteraction.getInstance();
-                        //fi.addUser(personne);
+                        indexService.detectionResult(personne);
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {

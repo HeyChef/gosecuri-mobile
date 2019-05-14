@@ -48,7 +48,6 @@
             android:text="Valider"
             android:layout_marginLeft="10dp"
             android:onClick="validateClick"
-            android:visibility="gone"
             tools:ignore="ButtonStyle" />
 
     </LinearLayout>
