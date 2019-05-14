@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -42,6 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import epsi.thomas.gosecuri.R;
+import epsi.thomas.gosecuri.entity.Personne;
 import epsi.thomas.gosecuri.firebase.FirebaseDetection;
 import epsi.thomas.gosecuri.service.IndexService;
 
@@ -51,7 +53,7 @@ public class IndexController extends AppCompatActivity {
     private Button btnCamera;
     private Uri imageUri;
     private Bitmap thumbnail;
-    private Button btnRotate;
+    private Button btnValidate;
 
     private IndexService indexService;
 
@@ -70,6 +72,7 @@ public class IndexController extends AppCompatActivity {
         FirebaseApp.initializeApp(this);
 
         indexService = new IndexService();
+
         if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
             return;
@@ -80,26 +83,23 @@ public class IndexController extends AppCompatActivity {
             return;
         }
 
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, MY_CAMERA_PERMISSION_CODE);
+        }
+
+
         btnCamera = findViewById(R.id.btnCamera);
         imageView = findViewById(R.id.imageView);
-        btnRotate = findViewById(R.id.btnRotate);
+        btnValidate = findViewById(R.id.btnValidate);
+    }
 
-        btnCamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(new String[]{Manifest.permission.CAMERA}, MY_CAMERA_PERMISSION_CODE);
-                } else {
-                    ContentValues values = new ContentValues();
-                    values.put(MediaStore.Images.Media.TITLE, "IDCard");
-                    imageUri = getContentResolver().insert(
-                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                    Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                    intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-                    startActivityForResult(intent, CAMERA_REQUEST);
-                }
-            }
-        });
+    public void cameraClick(View v) {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.TITLE, "IDCard");
+        imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+        startActivityForResult(intent, CAMERA_REQUEST);
     }
 
     @Override
@@ -108,22 +108,16 @@ public class IndexController extends AppCompatActivity {
             try {
                 thumbnail = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                 imageView.setImageBitmap(thumbnail);
-                btnRotate.setVisibility(View.VISIBLE);
-
-                FirebaseVisionImage image = FirebaseVisionImage.fromFilePath(getApplicationContext(), imageUri);
+                btnValidate.setVisibility(View.VISIBLE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void cameraClick(View v){
-
-    }
-
-    public void validateClick(View v){
-       Bitmap image = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
-       indexService.detectText(image);
+    public void validateClick(View v) {
+        Bitmap image = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+        Personne p = indexService.detectText(image);
     }
 
     @Override
