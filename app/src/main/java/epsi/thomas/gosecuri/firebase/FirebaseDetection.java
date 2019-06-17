@@ -65,42 +65,44 @@ public class FirebaseDetection {
         String prenom = "";
         String id = "";
 
-        for (FirebaseVisionDocumentText.Block block : result.getBlocks()) {
-            for (FirebaseVisionDocumentText.Paragraph paragraph : block.getParagraphs()) {
-                String paragraphText = paragraph.getText();
+        if(result != null){
+            for (FirebaseVisionDocumentText.Block block : result.getBlocks()) {
+                for (FirebaseVisionDocumentText.Paragraph paragraph : block.getParagraphs()) {
+                    String paragraphText = paragraph.getText();
 
-                paragraphText = paragraphText.replace("\n", "");
+                    paragraphText = paragraphText.replace("\n", "");
 
-                Matcher nomMatch = nomLabel.matcher(paragraphText);
-                Matcher prenomMatch = prenomLabel.matcher(paragraphText);
-                Matcher idMatch = idLabel.matcher(paragraphText);
+                    Matcher nomMatch = nomLabel.matcher(paragraphText);
+                    Matcher prenomMatch = prenomLabel.matcher(paragraphText);
+                    Matcher idMatch = idLabel.matcher(paragraphText);
 
-                if (nomMatch.find()) {
-                    String[] string = paragraphText.split(":");
-                    if (1 <= string.length) {
-                        nom = string[1];
-                        nom.replace(" ", "");
+                    if (nomMatch.find()) {
+                        String[] string = paragraphText.split(":");
+                        if (string.length>=2) {
+                            System.out.println("LENGTH : " + string.length);
+                            System.out.println(paragraphText);
+                            nom = string[1];
+                            nom.replace(" ", "");
+                        }
                     }
-                }
 
-                if (prenomMatch.find()) {
-                    String[] string = paragraphText.split(":");
-                    if (!string[1].isEmpty()) {
-                        string = string[1].split(",");
-                        prenom = string[0].replace(" ", "");
+                    if (prenomMatch.find()) {
+                        String[] string = paragraphText.split(":");
+                        if (!string[1].isEmpty()) {
+                            string = string[1].split(",");
+                            prenom = string[0].replace(" ", "");
+                        }
                     }
-                }
 
-                if (idMatch.find()) {
-                    id = idMatch.group().replace(" ", "");
+                    if (idMatch.find()) {
+                        id = idMatch.group().replace(" ", "");
+                    }
                 }
             }
         }
-        Log.i("GetLabel nom ", nom);
-        Log.i("GetLabel prenom ", prenom);
-        Log.i("GetLabel id ", id);
-        Personne personne = new Personne();
+        Personne personne = null;
         if (nom != "" && prenom != "" && id != "") {
+
             personne = new Personne(nom, prenom, id);
         }
         return personne;

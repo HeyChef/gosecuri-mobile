@@ -1,92 +1,70 @@
 package epsi.thomas.gosecuri.controller;
 
-import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ContentValues;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.RequiresApi;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.firebase.FirebaseApp;
+import java.io.IOException;
 
 import epsi.thomas.gosecuri.R;
-import epsi.thomas.gosecuri.service.IndexService;
-import epsi.thomas.gosecuri.utils.ConnectionUtils;
+import epsi.thomas.gosecuri.entity.Personne;
+import epsi.thomas.gosecuri.service.SecondCheckService;
 
-import static epsi.thomas.gosecuri.service.IndexService.hasPermissions;
+public class SecondCheckController extends AppCompatActivity {
 
-public class IndexController extends AppCompatActivity {
-
-    private Bitmap bitmapId;
-    private Button btnValidate;
+    private ImageView imageView;
     private Button btnCamera;
-
-    public ImageView imageView;
-    public Uri imageUri;
+    private Uri imageUri;
+    private Bitmap bitmapFace;
+    private Button btnValidate;
     public FrameLayout progressLayout;
     public TextView textView;
 
-    private IndexService indexService;
+    public Uri idUri;
+    public Personne personne;
 
-    private static final int CAMERA_REQUEST = 0;
+    private SecondCheckService secondCheckService;
+
+    private static final int CAMERA_REQUEST = 1888;
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_index);
+        setContentView(R.layout.activity_secondcheck);
 
-        FirebaseApp.initializeApp(this);
+        secondCheckService = new SecondCheckService(this);
 
-        indexService = new IndexService(this);
-
-        int PERMISSION_ALL = 1;
-        String[] PERMISSIONS = {
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                android.Manifest.permission.CAMERA
-        };
-
-        if (!hasPermissions(this, PERMISSIONS)) {
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
-        }
+        personne = (Personne) getIntent().getSerializableExtra("personne");
+        String uriString = getIntent().getStringExtra("imageUri");
+        idUri = Uri.parse(uriString);
 
         btnCamera = findViewById(R.id.btnCamera);
         imageView = findViewById(R.id.imageView);
         btnValidate = findViewById(R.id.btnValidate);
         progressLayout = findViewById(R.id.progressLayout);
         textView = findViewById(R.id.textView);
-
-        String message = getIntent().getStringExtra("message");
-
-        if (message != null) {
-            textView.setText(message);
-        }
-        ConnectionUtils.connectionTest(this);
     }
 
     public void cameraClick(View v) {
-        textView.setText(null);
         imageView.setBackgroundColor(Color.rgb(0, 0, 0));
         ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.TITLE, "IDCard");
+        values.put(MediaStore.Images.Media.TITLE, "Face");
         imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
@@ -97,7 +75,7 @@ public class IndexController extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == Activity.RESULT_OK) {
             try {
-                imageView.setImageBitmap(indexService.rotateImage(this, imageUri));
+                imageView.setImageBitmap(secondCheckService.rotateImage(this, imageUri));
                 ((LinearLayout.LayoutParams) btnCamera.getLayoutParams()).weight = 1;
                 btnValidate.setVisibility(View.VISIBLE);
             } catch (Exception e) {
@@ -108,8 +86,16 @@ public class IndexController extends AppCompatActivity {
 
     public void validateClick(View v) {
         progressLayout.setVisibility(View.VISIBLE);
+        Bitmap bitmapId = null;
+        try {
+            bitmapId = MediaStore.Images.Media.getBitmap(getContentResolver(), idUri);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
-        bitmapId = drawable.getBitmap();
-        indexService.detectText(bitmapId);
+        Bitmap bitmap = drawable.getBitmap();
+        bitmapFace = Bitmap.createScaledBitmap(bitmap,(int)(bitmap.getWidth()*0.8), (int)(bitmap.getHeight()*0.8), true);
+        secondCheckService.checkFace(bitmapFace, bitmapId);
     }
 }
